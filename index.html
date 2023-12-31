@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON/CSV Data Viewer</title>
+    <style>
+        /* Styles remain unchanged */
+    </style>
+</head>
+<body>
+    
+    <h1>JSON/CSV Data Viewer</h1>
+
+    <!-- Step 1: Upload a JSON or CSV file -->
+    <h2>Step 1: Upload a JSON or CSV File</h2>
+    <input type="file" accept=".json, .csv" id="fileInput" onchange="handleFileUpload()">
+    <div id="status"></div>
+
+    <!-- Step 2: Specify Format -->
+    <h2>Step 2: Specify Format</h2>
+    <label for="fileType">File Type:</label>
+    <select id="fileType">
+        <option value="json">JSON</option>
+        <option value="csv">CSV</option>
+    </select>
+
+    <label for="charEncoding">Character Encoding:</label>
+    <input type="text" id="charEncoding">
+
+    <label for="delimiter">Delimiter:</label>
+    <input type="text" id="delimiter">
+
+    <label for="hasHeader">Has Header:</label>
+    <input type="checkbox" id="hasHeader">
+
+    <button onclick="submitFormat()">Submit</button>
+
+    <!-- Step 3: Display Handling -->
+    <h2>Step 3: Display Handling</h2>
+    <label for="availableFields">Available Fields:</label>
+    <select id="availableFields" multiple>
+        <!-- Populate available fields dynamically using JavaScript -->
+    </select>
+
+    <button onclick="addOption()">>></button>
+    <button onclick="removeOption()"><</button>
+
+    <label for="displayedFields">Fields to be Displayed:</label>
+    <select id="displayedFields" multiple>
+        <!-- Populate displayed fields dynamically using JavaScript -->
+    </select>
+
+    <button onclick="displayData()">Display Data</button>
+
+    <table id="dataTable"></table>
+
+    <script>
+        // JSON/CSV data variable
+        let fileData;
+        let displayedFields = [];
+
+        // Step 1: Upload a JSON or CSV file
+        function handleFileUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const statusDiv = document.getElementById('status');
+            const file = fileInput.files[0];
+
+            if (file) {
+                statusDiv.textContent = `File selected: ${file.name}`;
+                readDataFile(file);
+            } else {
+                statusDiv.textContent = 'No file selected';
+            }
+        }
+
+        // Read JSON or CSV file
+// Read JSON or CSV file
+function readDataFile(file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const fileType = document.getElementById('fileType').value;
+
+        if (fileType === 'json') {
+            try {
+                const jsonData = JSON.parse(e.target.result);
+                fileData = jsonData.products || {};
+                console.log('Parsed JSON Data:', fileData);
+
+                populateAvailableFields();
+            } catch (error) {
+                console.error('Error parsing JSON file:', error.message);
+            }
+        } else if (fileType === 'csv') {
+            console.log('Raw CSV Data:', e.target.result);
+            parseCsv(e.target.result);
+        }
+    };
+    reader.readAsText(file);
+}
+
+
+
+        // Parse CSV data
+        function parseCsv(csvData) {
+            const { delimiter, hasHeader } = getFormatValues();
+            const lines = csvData.split('\n');
+            const headers = hasHeader ? lines[0].split(delimiter) : Array.from({ length: lines[0].split(delimiter).length }, (_, i) => `Column ${i + 1}`);
+            fileData = [];
+
+            for (let i = hasHeader ? 1 : 0; i < lines.length; i++) {
+                const values = lines[i].split(delimiter);
+                const record = {};
+
+                for (let j = 0; j < headers.length; j++) {
+                    record[headers[j]] = values[j];
+                }
+
+                fileData.push(record);
+            }
+
+            console.log('Parsed CSV Data:', fileData);
+            populateAvailableFields();
+        }
+
+        // Step 2: Specify Format
+        function submitFormat() {
+            const fileType = document.getElementById('fileType').value;
+            const charEncoding = document.getElementById('charEncoding').value;
+            const delimiter = document.getElementById('delimiter').value;
+            const hasHeader = document.getElementById('hasHeader').checked;
+
+            // You can use these values as needed for further processing
+            console.log('File Type:', fileType);
+            console.log('Character Encoding:', charEncoding);
+            console.log('Delimiter:', delimiter);
+            console.log('Has Header:', hasHeader);
+        }
+
+        // Step 3: Display Handling
+        function populateAvailableFields() {
+    const availableFieldsSelect = document.getElementById('availableFields');
+    availableFieldsSelect.innerHTML = '';
+
+    // Check if fileData is defined and has at least one record
+    if (fileData && Object.keys(fileData).length > 0) {
+        const firstRecord = fileData[Object.keys(fileData)[0]];
+        Object.keys(firstRecord).forEach(field => {
+            const option = document.createElement('option');
+            option.value = field;
+            option.text = field;
+            availableFieldsSelect.appendChild(option);
+        });
+    } else {
+        console.error('No data available.');
+    }
+}
+
+
+        function addOption() {
+            const selectedValues = Array.from(document.getElementById('availableFields').selectedOptions).map(option => option.value);
+            displayedFields.push(...selectedValues);
+            updateFieldsLists();
+        }
+
+        function removeOption() {
+            const selectedValues = Array.from(document.getElementById('displayedFields').selectedOptions).map(option => option.value);
+            displayedFields = displayedFields.filter(field => !selectedValues.includes(field));
+            updateFieldsLists();
+        }
+
+        function updateFieldsLists() {
+            const availableFieldsSelect = document.getElementById('availableFields');
+            const displayedFieldsSelect = document.getElementById('displayedFields');
+
+            displayedFieldsSelect.innerHTML = '';
+            Object.keys(fileData).forEach(field => {
+                if (!displayedFields.includes(field)) {
+                    const option = document.createElement('option');
+                    option.value = field;
+                    option.text = field;
+                    availableFieldsSelect.appendChild(option);
+                }
+            });
+
+            displayedFields.forEach(field => {
+                const option = document.createElement('option');
+                option.value = field;
+                option.text = field;
+                displayedFieldsSelect.appendChild(option);
+            });
+        }
+
+        // Display Data
+// Display Data
+function displayData() {
+    if (!fileData) {
+        console.error('No data available.');
+        return;
+    }
+
+    const products = fileData;
+    const productArray = Object.values(products);
+
+    // Find the popularity field, case-insensitive
+    const popularityField = findFieldCaseInsensitive(productArray[0], 'popularity');
+
+    if (!popularityField) {
+        console.error('Popularity field is missing in the data.');
+        return;
+    }
+
+    // Sort data by descending popularity
+    productArray.sort((a, b) => (b[popularityField] - a[popularityField]));
+    console.log('Sorted Data:', productArray);
+
+    const dataTable = document.getElementById('dataTable');
+    dataTable.innerHTML = '';
+
+    // Create table header
+    const tableHeader = document.createElement('tr');
+    displayedFields.forEach(field => {
+        const th = document.createElement('th');
+        th.textContent = field;
+        tableHeader.appendChild(th);
+    });
+    dataTable.appendChild(tableHeader);
+
+    // Create table rows
+    productArray.forEach(record => {
+        const tr = document.createElement('tr');
+        displayedFields.forEach(field => {
+            const td = document.createElement('td');
+            td.textContent = record[field];
+            tr.appendChild(td);
+        });
+        dataTable.appendChild(tr);
+    });
+
+    console.log('Data Displayed Successfully.');
+}
+
+// Find field case-insensitive
+function findFieldCaseInsensitive(obj, targetField) {
+    const fields = Object.keys(obj);
+    const lowerTargetField = targetField.toLowerCase();
+    return fields.find(field => field.toLowerCase() === lowerTargetField);
+}
+
+
+
+
+        // Get format values
+        function getFormatValues() {
+            return {
+                delimiter: document.getElementById('delimiter').value,
+                hasHeader: document.getElementById('hasHeader').checked,
+            };
+        }
+    </script>
+</body>
+</html>
