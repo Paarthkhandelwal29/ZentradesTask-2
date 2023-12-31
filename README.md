@@ -8,7 +8,7 @@ Download the json file from the link:- https://s3.amazonaws.com/open-to-cors/ass
 * Price
 * Popularity 
 
-Step 1:- Choose the json/csv file.
-Step 2:- Specify format.
-Step 3:- Select the fields to be displayed in descending order based on Popularity.
+* Step 1:- Choose the json/csv file.
+* Step 2:- Specify format.
+* Step 3:- Select the fields to be displayed in descending order based on Popularity.
 
